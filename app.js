@@ -1,34 +1,13 @@
 const express = require("express");
-const mongoose = require("mongoose");
-const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-// const jwt = require("jsonwebtoken");
 const verifyToken = require("./token");
+const User = require("./models/User");
+const connectDB = require("./connection");
+
 const app = express();
 app.use(express.json());
-
-mongoose
-  .connect("mongodb://localhost:27017/sample1", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log("DB connected");
-  })
-  .catch((err) => {
-    console.error("Error connecting to MongoDB:", err);
-  });
-
-const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  location: { type: String },
-  age: { type: Number },
-  workDetails: { type: String },
-});
-
-const User = mongoose.model("User", userSchema);
+connectDB();
 
 app.post("/register", async (req, res) => {
   try {
