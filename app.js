@@ -4,7 +4,7 @@ const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 // const jwt = require("jsonwebtoken");
-
+const verifyToken = require("./token");
 const app = express();
 app.use(express.json());
 
@@ -81,26 +81,16 @@ app.post("/login", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
-app.put("/user/info", async (req, res) => {
+app.put("/user/info", verifyToken, async (req, res) => {
   try {
-    const token = req.headers.authorization.split(" ")[1];
-
-    const decodedToken = jwt.verify(token, "60606060");
-
-    const userEmail = decodedToken.email;
-
-    const user = await User.findOne({ email: userEmail });
+    const user = await User.findOne({ email: req.userEmail });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
     user.location = req.body.location || user.location;
     user.age = req.body.age || user.age;
     user.workDetails = req.body.workDetails || user.workDetails;
-
     await user.save();
-
     res.status(200).json({ message: "User details updated successfully" });
   } catch (error) {
     console.error("Error updating user details:", error);
@@ -108,27 +98,18 @@ app.put("/user/info", async (req, res) => {
   }
 });
 
-// GET API endpoint to retrieve all user details with JWT validation
-app.get("/user", async (req, res) => {
+app.get("/user", verifyToken, async (req, res) => {
   try {
-    const token = req.headers.authorization.split(" ")[1];
-
-    const decodedToken = jwt.verify(token, "60606060");
-
-    const userEmail = decodedToken.email;
-
-    const user = await User.findOne({ email: userEmail });
+    const user = await User.findOne({ email: req.userEmail });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
     const userDetails = {
       email: user.email,
       location: user.location,
       age: user.age,
       workDetails: user.workDetails,
     };
-
     res.status(200).json(userDetails);
   } catch (error) {
     console.error("Error retrieving user details:", error);
