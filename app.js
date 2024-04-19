@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+// const jwt = require("jsonwebtoken");
 
 const app = express();
 app.use(express.json());
@@ -80,7 +81,7 @@ app.post("/login", async (req, res) => {
     }
 
     // Generate JWT token
-    const token = jwt.sign({ email: user.email }, "your_secret_key", {
+    const token = jwt.sign({ email: user.email }, "60606060", {
       expiresIn: "1h",
     });
 
@@ -94,7 +95,32 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.put("/add-info", async (req, res) => {});
+app.put("/user/info", async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+
+    const decodedToken = jwt.verify(token, "60606060");
+
+    const userEmail = decodedToken.email;
+
+    const user = await User.findOne({ email: userEmail });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.location = req.body.location || user.location;
+    user.age = req.body.age || user.age;
+    user.workDetails = req.body.workDetails || user.workDetails;
+
+    await user.save();
+
+    res.status(200).json({ message: "User details updated successfully" });
+  } catch (error) {
+    console.error("Error updating user details:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
